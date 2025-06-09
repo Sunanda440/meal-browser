@@ -70,10 +70,32 @@ export const generateMealPlan = (user: User): MealPlan[] => {
   // Filter meals based on dietary preferences and allergies
   const availableMeals = getDietaryFilteredMeals(mealDatabase, user.dietaryPreferences, user.allergies);
   
-  const breakfastMeals = availableMeals.filter(meal => meal.id.startsWith('breakfast_'));
-  const lunchMeals = availableMeals.filter(meal => meal.id.startsWith('lunch_'));
-  const dinnerMeals = availableMeals.filter(meal => meal.id.startsWith('dinner_'));
-  const snackMeals = availableMeals.filter(meal => meal.id.startsWith('snack_'));
+  // Filter by meal type, but fallback to all meals if filtered arrays are empty
+  let breakfastMeals = availableMeals.filter(meal => meal.id.startsWith('breakfast_'));
+  let lunchMeals = availableMeals.filter(meal => meal.id.startsWith('lunch_'));
+  let dinnerMeals = availableMeals.filter(meal => meal.id.startsWith('dinner_'));
+  let snackMeals = availableMeals.filter(meal => meal.id.startsWith('snack_'));
+
+  // Fallback to all meals of each type if filtered arrays are empty
+  if (breakfastMeals.length === 0) {
+    breakfastMeals = mealDatabase.filter(meal => meal.id.startsWith('breakfast_'));
+  }
+  if (lunchMeals.length === 0) {
+    lunchMeals = mealDatabase.filter(meal => meal.id.startsWith('lunch_'));
+  }
+  if (dinnerMeals.length === 0) {
+    dinnerMeals = mealDatabase.filter(meal => meal.id.startsWith('dinner_'));
+  }
+  if (snackMeals.length === 0) {
+    snackMeals = mealDatabase.filter(meal => meal.id.startsWith('snack_'));
+  }
+
+  console.log('Meal arrays length:', {
+    breakfast: breakfastMeals.length,
+    lunch: lunchMeals.length,
+    dinner: dinnerMeals.length,
+    snacks: snackMeals.length
+  });
 
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   
@@ -86,6 +108,12 @@ export const generateMealPlan = (user: User): MealPlan[] => {
     const dinner = dinnerMeals[(day - 1) % dinnerMeals.length];
     const snack1 = snackMeals[(day - 1) % snackMeals.length];
     const snack2 = snackMeals[((day - 1) + 1) % snackMeals.length];
+
+    // Verify all meals are defined before proceeding
+    if (!breakfast || !lunch || !dinner || !snack1 || !snack2) {
+      console.error('One or more meals are undefined:', { breakfast, lunch, dinner, snack1, snack2 });
+      continue; // Skip this day if any meal is undefined
+    }
 
     const dayMeals = {
       breakfast,
