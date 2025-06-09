@@ -24,6 +24,7 @@ const UserProfileForm = () => {
 
   const dietaryOptions = [
     { id: 'vegetarian', label: 'Vegetarian' },
+    { id: 'non-vegetarian', label: 'Non-Vegetarian' },
     { id: 'vegan', label: 'Vegan' },
     { id: 'keto', label: 'Ketogenic' },
     { id: 'paleo', label: 'Paleo' },

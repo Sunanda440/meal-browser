@@ -21,6 +21,7 @@ export interface MealPlan {
     lunch: Meal;
     dinner: Meal;
     snacks: Meal[];
+    juice: Meal;
   };
   totalCalories: number;
   macros: {

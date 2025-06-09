@@ -129,22 +129,23 @@ const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({ mealPlans, targetCalo
               </div>
 
               <div>
+                <h4 className="text-xl font-semibold mb-3 text-green-600">🥤 Fresh Juice</h4>
+                <MealCard meal={plan.meals.juice} type="juice" />
+              </div>
+
+              <div>
                 <h4 className="text-xl font-semibold mb-3 text-orange-600">☀️ Lunch</h4>
                 <MealCard meal={plan.meals.lunch} type="lunch" />
               </div>
 
               <div>
-                <h4 className="text-xl font-semibold mb-3 text-purple-600">🌙 Dinner</h4>
-                <MealCard meal={plan.meals.dinner} type="dinner" />
+                <h4 className="text-xl font-semibold mb-3 text-pink-600">🍎 Snack</h4>
+                <MealCard meal={plan.meals.snacks[0]} type="snack" />
               </div>
 
               <div>
-                <h4 className="text-xl font-semibold mb-3 text-pink-600">🍎 Snacks</h4>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {plan.meals.snacks.map((snack, index) => (
-                    <MealCard key={`${snack.id}-${index}`} meal={snack} type="snack" />
-                  ))}
-                </div>
+                <h4 className="text-xl font-semibold mb-3 text-purple-600">🌙 Dinner</h4>
+                <MealCard meal={plan.meals.dinner} type="dinner" />
               </div>
             </div>
           </TabsContent>
