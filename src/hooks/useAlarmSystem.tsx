@@ -39,7 +39,7 @@ export const useAlarmSystem = () => {
   const [settings, setSettings] = useState<AlarmSettings>(DEFAULT_SETTINGS);
   const [currentRingingAlarm, setCurrentRingingAlarm] = useState<string | null>(null);
   const { toast } = useToast();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<any>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load alarms and settings from localStorage
@@ -93,41 +93,121 @@ export const useAlarmSystem = () => {
     }
   }, [settings.vibrate]);
 
+  // Generate alarm sound using Web Audio API
+  const generateAlarmTone = useCallback((type: string, audioContext: AudioContext, duration: number = 1) => {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    // Configure sound based on type
+    switch (type) {
+      case 'classic':
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.5);
+        oscillator.type = 'square';
+        break;
+      case 'gentle':
+        oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+        oscillator.type = 'sine';
+        break;
+      case 'bells':
+        oscillator.frequency.setValueAtTime(523, audioContext.currentTime); // C5
+        oscillator.frequency.setValueAtTime(659, audioContext.currentTime + 0.3); // E5
+        oscillator.frequency.setValueAtTime(784, audioContext.currentTime + 0.6); // G5
+        oscillator.type = 'sine';
+        break;
+      case 'chirp':
+        oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(2000, audioContext.currentTime + 0.1);
+        oscillator.frequency.exponentialRampToValueAtTime(1000, audioContext.currentTime + 0.2);
+        oscillator.type = 'triangle';
+        break;
+      default:
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.type = 'square';
+    }
+
+    // Set volume with envelope
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(settings.volume * 0.8, audioContext.currentTime + 0.05);
+    gainNode.gain.linearRampToValueAtTime(settings.volume * 0.6, audioContext.currentTime + duration * 0.8);
+    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + duration);
+
+    return oscillator;
+  }, [settings.volume]);
+
   // Play alarm sound
   const playAlarmSound = useCallback((sound: string, isCustomSound: boolean) => {
     try {
+      // Stop any existing sound
       if (audioRef.current) {
-        audioRef.current.pause();
+        if (audioRef.current.stop) audioRef.current.stop();
+        if (audioRef.current.interval) clearInterval(audioRef.current.interval);
         audioRef.current = null;
       }
 
-      let audioSrc = '';
       if (isCustomSound) {
-        audioSrc = sound; // Custom sound URL
+        // Play custom sound file
+        const audio = new Audio(sound);
+        audio.volume = settings.volume;
+        audio.loop = true;
+        audio.play().catch(console.error);
+        audioRef.current = audio;
       } else {
-        // Built-in sounds (we'll use data URLs for simplicity)
-        const sounds: Record<string, string> = {
-          classic: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LNeSb2M4DMCM',
-          gentle: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LNeSb2M4DM',
-          bells: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LNeSb2M4DM',
-          chirp: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LNeSb2M4DM',
+        // Use Web Audio API for built-in sounds
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        
+        const playTone = () => {
+          generateAlarmTone(sound, audioContext, 1.5);
         };
-        audioSrc = sounds[sound] || sounds.classic;
+        
+        // Play immediately
+        playTone();
+        
+        // Set up repeating sound
+        const interval = setInterval(playTone, 2000);
+        
+        audioRef.current = {
+          stop: () => {
+            clearInterval(interval);
+            audioContext.close().catch(console.error);
+          },
+          interval
+        };
       }
-
-      audioRef.current = new Audio(audioSrc);
-      audioRef.current.volume = settings.volume;
-      audioRef.current.loop = true;
-      audioRef.current.play().catch(console.error);
     } catch (error) {
       console.error('Error playing alarm sound:', error);
+      // Fallback: Try simple beep
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(settings.volume, audioContext.currentTime);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 1);
+      } catch (fallbackError) {
+        console.error('Fallback sound also failed:', fallbackError);
+      }
     }
-  }, [settings.volume]);
+  }, [settings.volume, generateAlarmTone]);
 
   // Stop alarm sound
   const stopAlarmSound = useCallback(() => {
     if (audioRef.current) {
-      audioRef.current.pause();
+      if (audioRef.current.stop) {
+        audioRef.current.stop();
+      } else if (audioRef.current.pause) {
+        audioRef.current.pause();
+      }
       audioRef.current = null;
     }
   }, []);
