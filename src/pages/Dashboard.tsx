@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import UserProfileForm from '@/components/UserProfileForm';
 import MealPlanDisplay from '@/components/MealPlanDisplay';
+import AlarmManager from '@/components/AlarmManager';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { generateMealPlan, calculateDailyCalories, calculateMacros } from '@/utils/mealPlanner';
@@ -48,6 +49,9 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 py-8 space-y-8">
         {/* Profile Section */}
         <UserProfileForm />
+
+        {/* Alarm System */}
+        <AlarmManager />
 
         {/* Quick Stats */}
         {isProfileComplete && (

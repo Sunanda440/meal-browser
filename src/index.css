@@ -50,6 +50,11 @@
     --meal-lunch: 30 100% 65%;
     --meal-dinner: 250 70% 65%;
     --meal-snack: 320 65% 70%;
+
+    --alarm-success: 142 76% 36%;
+    --alarm-warning: 45 93% 47%;
+    --alarm-danger: 0 84% 60%;
+    --alarm-info: 217 91% 60%;
   }
 
   .dark {
@@ -121,5 +126,20 @@
   
   .meal-snack {
     @apply border-l-4 border-l-pink-400;
+  }
+  
+  .alarm-pulse {
+    animation: alarm-pulse 1s ease-in-out infinite;
+  }
+  
+  @keyframes alarm-pulse {
+    0%, 100% { 
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% { 
+      transform: scale(1.05);
+      opacity: 0.8;
+    }
   }
 }
