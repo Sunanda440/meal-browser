@@ -1,10 +1,15 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { MealPlan, Meal } from '@/types/user';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { Eye } from 'lucide-react';
+import { useAlarmSystem } from '@/hooks/useAlarmSystem';
+import MealDetailsPanel from './MealDetailsPanel';
+import MealAlarmCard from './MealAlarmCard';
 
 interface MealPlanDisplayProps {
   mealPlans: MealPlan[];
@@ -12,12 +17,36 @@ interface MealPlanDisplayProps {
   targetMacros: { protein: number; carbs: number; fat: number };
 }
 
-const MealCard: React.FC<{ meal: Meal; type: string }> = ({ meal, type }) => (
+// Meal time mappings for alarms
+const MEAL_TIME_MAPPINGS = {
+  breakfast: '08:30',
+  juice: '10:30', 
+  lunch: '12:30',
+  snack: '17:00',
+  dinner: '19:20'
+};
+
+const MealCard: React.FC<{ 
+  meal: Meal; 
+  type: string;
+  onViewDetails: (meal: Meal) => void;
+}> = ({ meal, type, onViewDetails }) => (
   <Card className={`meal-card meal-${type}`}>
     <CardHeader className="pb-3">
       <div className="flex justify-between items-start">
         <CardTitle className="text-lg">{meal.name}</CardTitle>
-        <Badge variant="secondary">{meal.calories} cal</Badge>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onViewDetails(meal)}
+            className="text-xs px-2 py-1 h-auto"
+          >
+            <Eye className="w-3 h-3 mr-1" />
+            Recipe
+          </Button>
+          <Badge variant="secondary">{meal.calories} cal</Badge>
+        </div>
       </div>
       <CardDescription>{meal.description}</CardDescription>
     </CardHeader>
@@ -44,6 +73,19 @@ const MealCard: React.FC<{ meal: Meal; type: string }> = ({ meal, type }) => (
 );
 
 const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({ mealPlans, targetCalories, targetMacros }) => {
+  const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
+  const [showMealDetails, setShowMealDetails] = useState(false);
+  const { alarms, toggleAlarm } = useAlarmSystem();
+
+  const handleViewMealDetails = (meal: Meal) => {
+    setSelectedMeal(meal);
+    setShowMealDetails(true);
+  };
+
+  const getMealAlarm = (mealType: string) => {
+    const targetTime = MEAL_TIME_MAPPINGS[mealType as keyof typeof MEAL_TIME_MAPPINGS];
+    return alarms.find(alarm => alarm.time === targetTime);
+  };
   if (mealPlans.length === 0) {
     return (
       <Card>
@@ -123,34 +165,70 @@ const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({ mealPlans, targetCalo
 
             {/* Meals */}
             <div className="space-y-6">
-              <div>
+              <div className="space-y-3">
                 <h4 className="text-xl font-semibold mb-3 text-yellow-600">🌅 Breakfast</h4>
-                <MealCard meal={plan.meals.breakfast} type="breakfast" />
+                <MealAlarmCard 
+                  alarm={getMealAlarm('breakfast')}
+                  mealTime="8:30 AM"
+                  mealLabel="Breakfast Time"
+                  onToggle={toggleAlarm}
+                />
+                <MealCard meal={plan.meals.breakfast} type="breakfast" onViewDetails={handleViewMealDetails} />
               </div>
 
-              <div>
+              <div className="space-y-3">
                 <h4 className="text-xl font-semibold mb-3 text-green-600">🥤 Fresh Juice</h4>
-                <MealCard meal={plan.meals.juice} type="juice" />
+                <MealAlarmCard 
+                  alarm={getMealAlarm('juice')}
+                  mealTime="10:30 AM"
+                  mealLabel="Morning Snack"
+                  onToggle={toggleAlarm}
+                />
+                <MealCard meal={plan.meals.juice} type="juice" onViewDetails={handleViewMealDetails} />
               </div>
 
-              <div>
+              <div className="space-y-3">
                 <h4 className="text-xl font-semibold mb-3 text-orange-600">☀️ Lunch</h4>
-                <MealCard meal={plan.meals.lunch} type="lunch" />
+                <MealAlarmCard 
+                  alarm={getMealAlarm('lunch')}
+                  mealTime="12:30 PM"
+                  mealLabel="Lunch Time"
+                  onToggle={toggleAlarm}
+                />
+                <MealCard meal={plan.meals.lunch} type="lunch" onViewDetails={handleViewMealDetails} />
               </div>
 
-              <div>
+              <div className="space-y-3">
                 <h4 className="text-xl font-semibold mb-3 text-pink-600">🍎 Snack</h4>
-                <MealCard meal={plan.meals.snacks[0]} type="snack" />
+                <MealAlarmCard 
+                  alarm={getMealAlarm('snack')}
+                  mealTime="5:00 PM"
+                  mealLabel="Afternoon Snack"
+                  onToggle={toggleAlarm}
+                />
+                <MealCard meal={plan.meals.snacks[0]} type="snack" onViewDetails={handleViewMealDetails} />
               </div>
 
-              <div>
+              <div className="space-y-3">
                 <h4 className="text-xl font-semibold mb-3 text-purple-600">🌙 Dinner</h4>
-                <MealCard meal={plan.meals.dinner} type="dinner" />
+                <MealAlarmCard 
+                  alarm={getMealAlarm('dinner')}
+                  mealTime="7:20 PM"
+                  mealLabel="Dinner Time"
+                  onToggle={toggleAlarm}
+                />
+                <MealCard meal={plan.meals.dinner} type="dinner" onViewDetails={handleViewMealDetails} />
               </div>
             </div>
           </TabsContent>
         ))}
       </Tabs>
+
+      <MealDetailsPanel 
+        meal={selectedMeal}
+        isOpen={showMealDetails}
+        onClose={() => setShowMealDetails(false)}
+      />
     </div>
   );
 };

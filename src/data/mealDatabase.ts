@@ -110,18 +110,35 @@ export const mealDatabase: Meal[] = [
   },
   {
     id: 'breakfast_8',
-    name: 'English Muffin with Peanut Butter',
-    description: 'Toasted English muffin with peanut butter and banana slices',
-    calories: 340,
-    protein: 14,
-    carbs: 42,
-    fat: 14,
-    ingredients: ['English muffin', 'Peanut butter', 'Banana'],
-    instructions: ['Toast muffin', 'Spread peanut butter', 'Add banana slices'],
-    prepTime: 4,
-    cookTime: 2,
+    name: 'Paneer or Tofu Paratha with Curd',
+    description: 'Whole wheat paratha stuffed with spiced paneer or tofu, served with fresh curd',
+    calories: 450,
+    protein: 20,
+    carbs: 40,
+    fat: 22,
+    ingredients: [
+      '1/2 cup crumbled paneer or tofu',
+      '1/2 cup whole wheat flour',
+      '1/4 tsp cumin powder',
+      '1/4 tsp garam masala',
+      '1/4 tsp chili flakes (optional)',
+      '1 tbsp chopped coriander leaves',
+      'Salt to taste',
+      '1 tsp ghee or oil for cooking',
+      '2 tbsp curd (plain yogurt) for serving'
+    ],
+    instructions: [
+      'In a bowl, mix crumbled paneer/tofu with spices, salt, and coriander.',
+      'Prepare dough using whole wheat flour and water, knead until soft.',
+      'Divide the dough into 2 balls, roll each into small discs.',
+      'Place stuffing in one disc, cover with another, seal edges, and roll into a paratha.',
+      'Cook on a hot tawa using 1 tsp ghee/oil until golden on both sides.',
+      'Serve hot with curd.'
+    ],
+    prepTime: 10,
+    cookTime: 10,
     servings: 1,
-    tags: ['vegetarian', 'quick', 'portable', 'energy-boosting']
+    tags: ['vegetarian', 'comfort-food', 'weekend-special', 'weight-gain-friendly']
   },
   {
     id: 'breakfast_9',
